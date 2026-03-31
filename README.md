@@ -1,5 +1,8 @@
-# RTTS
-Official PyTorch implementation of "Towards Robust Test-Time Segmentation via Iterative Object-centric Adaptation"
+
+# Towards Robust Test-Time Segmentation via Iterative Object-centric Adaptation
+
+The official implementation of our paper "Towards Robust Test-Time Segmentation via Iterative Object-centric Adaptation".
+
 ## Method
 
 <p align="justify">
