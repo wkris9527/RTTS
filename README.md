@@ -24,10 +24,10 @@ The official implementation of our paper "Towards Robust Test-Time Segmentation 
 
 
 ## Requirements 
-- [Python 3.10.13](https://www.python.org/)
-- [CUDA 11.8](https://developer.nvidia.com/cuda-zone)
-- [PyTorch 2.1.2](https://pytorch.org/)
-- [MMSegmentation 1.2.2](https://github.com/open-mmlab/mmsegmentation)
+- Python 3.10.13
+- CUDA 11.8
+- PyTorch 2.1.2
+- MMSegmentation 1.2.2
 
 
 ## Getting Started
@@ -46,32 +46,22 @@ pip install -r requirements.txt
 
 We evaluate RTTS on seven widely-used segmentation benchmarks, chosen to span indoor/outdoor scenes, object–stuff mixes, and a range of class granularities:
 
-- [PASCAL VOC 20/21](https://paperswithcode.com/dataset/pascal-voc) – The 20 foreground categories (with an optional challenging background label).
-- [PASCAL Context 59/60](https://paperswithcode.com/paper/the-role-of-context-for-object-detection-and) – The 59 foreground categories (with an optional challenging background label).
-- [CityScapes](https://www.cityscapes-dataset.com/) – 19 urban-scene categories.
-- [COCO-Object](https://arxiv.org/abs/1405.0312) – the 80 COCO object classes.
-- [COCO-Stuff 164k](https://arxiv.org/abs/1612.03716) – 164 thing-and-stuff classes.
+- PASCAL VOC 20/21 – The 20 foreground categories (with an optional challenging background label).
+- PASCAL Context 59/60 – The 59 foreground categories (with an optional challenging background label).
+- CityScapes – 19 urban-scene categories.
+- COCO-Object – the 80 COCO object classes.
+- COCO-Stuff 164k – 164 thing-and-stuff classes.
 
 
-Please follow the [MMSeg data preparation document](https://github.com/open-mmlab/mmsegmentation/blob/main/docs/en/user_guides/2_dataset_prepare.md) to download and pre-process the datasets. Please note that we only use the validation split of each dataset.
+Please follow the MMSeg data preparation document to download and pre-process the datasets. Please note that we only use the validation split of each dataset.
 
 
-Additionally, inspired by [ImageNet-C](https://github.com/hendrycks/robustness), we generate 15 corruption types (e.g., noise, blur, weather, compression) *on-the-fly* at test time, allowing us to effectively evaluate each adaptation method’s robustness to diverse distribution shifts. 
+Additionally, we generate 15 corruption types (e.g., noise, blur, weather, compression) *on-the-fly* at test time, allowing us to effectively evaluate each adaptation method’s robustness to diverse distribution shifts. 
 
 Remember to modify the dataset paths `DATA_DIR` and corruption type in the bash files in `./bash`. 
 
 ---
 ### Step 3: Perform Adaptation
-
-There are different bash files in `./bash` directory which are prepared to reproduce the results of the paper for **different methods**, **datasets**, and **corruptions**.
-
-We support these methods:
-- RTTS (our proposed method)
-- [MLMP](https://arxiv.org/html/2505.21844)
-- [WATT](https://arxiv.org/abs/2406.13875)
-- [CLIPArTT](https://arxiv.org/abs/2405.00754)
-- [TPT](https://arxiv.org/abs/2209.07511)
-- [TENT](https://arxiv.org/abs/2006.10726)
 
 To reproduce our results on PASCAL VOC 20 (v20)— the clean split and all 15 corruption variants—simply run `./bash/v20/rtts.sh`:
 ```bash
@@ -94,7 +84,7 @@ OVSS_TYPE="naclip"
 OVSS_BACKBONE="ViT-L/14"
 
 # Hyperparameters
-BATCH_SIZE=2
+BATCH_SIZE=1
 LR=0.001
 STEPS=10
 TRIALS=3
@@ -128,11 +118,3 @@ Comparison with state-of-the-art TTA methods for open-vocabulary segmentation. F
 | Object-O | 23.80   | 24.88  | 23.84  | 14.14  | 21.34    | 28.84  | **31.96** ↑3.12 |
 | Stuff-O  | 18.34   | 18.76  | 18.35  | 9.49   | 15.48    | 21.25  | **23.22** ↑1.97 |
 
-## License
-
-This source code is released under the MIT license, which can be found [here](LICENCE). This project integrates elements from the following repositories; we gratefully acknowledge the authors for making their work open-source:
-- [MLMP](https://github.com/dosowiechi/MLMP) (MIT licensed)
-- [WATT](https://github.com/mehrdad-noori/watt) (MIT licensed)
-- [NACLIP](https://github.com/sinahmr/NACLIP) (MIT licensed)
-- [CLIP](https://github.com/openai/CLIP/tree/main/clip) (MIT licensed)
-- [TENT](https://github.com/DequanWang/tent) (MIT licensed)
