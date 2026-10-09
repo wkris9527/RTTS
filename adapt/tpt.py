@@ -28,7 +28,7 @@ class TPT(nn.Module):
     """
 
     def __init__(self, ovss_type, ovss_backbone, classes, lr=5e-3, n_ctx=4, steps=1, 
-                 runtime_calculation=False, device= "cuda",
+                 runtime_calculation=False, device= "cuda", with_rtts=False,
                  ):
         """
         Initialize the TPT adaptation module.
@@ -100,6 +100,7 @@ class TPT(nn.Module):
         self.random_mask = False  ##是否使用随机mask替代从logits生成的mask方法
         self.Sinkhorn_clustered = True  ##是否使用Sinkhorn对logits进行聚类
         self.prompt_type = 'point'  # 提示类型: 'point' 或 'box'
+        self.with_rtts = with_rtts
         self.logits2sam = SAMwithlogits(
                 num_sample_points=10,
                 response_thresh_ratio=0.5,
@@ -111,8 +112,8 @@ class TPT(nn.Module):
                 alpha=0.3,               # 语义得分权重 30%
                 beta=0.7,                 # 几何得分权重 70%
                 Sinkhorn_clustered = self.Sinkhorn_clustered,
-            )
-        self.patch_size = 14
+            ) if with_rtts else None
+        self.patch_size = self.model.visual.patch_size
 
 
     # ==================================================================
@@ -206,7 +207,8 @@ class TPT(nn.Module):
         logits = logits.permute(0, 2, 1).reshape(-1, out_dim, w, h) # (batch_size, #class, W, H)
         logits = logits.unsqueeze(0)  # add template dim
         txt_feat = txt_feat / txt_feat.norm(dim=-1, keepdim=True)
-        logits = self.updatelogits(logits, images, txt_feat, image_features=img_feat)
+        if self.with_rtts:
+            logits = self.updatelogits(logits, images, txt_feat, image_features=img_feat)
         logits = self.interpolate_logits(logits, images)
         logits = logits[0]  # remove template dim
 
