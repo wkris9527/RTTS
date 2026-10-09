@@ -19,14 +19,9 @@ python scripts/check_environment.py --output outputs/environment.json
 
 MMCV is tied to the installed PyTorch and CUDA versions. Consult the [official MMCV installation guide](https://mmcv.readthedocs.io/en/latest/get_started/installation.html) if a matching prebuilt wheel is unavailable. Install only one of `mmcv` and `mmcv-lite`; the main stack specifies `mmcv`.
 
-SAM is pinned to upstream commit `dca509fe793f601edb92606367a655c15ac00fdf`. The model weights are separate from the Python package. The default path is `checkpoints/sam_vit_h_4b8939.pth`. CLIP weights download automatically to `~/.cache/clip` on first load; an internet connection is required unless already cached.
+SAM is pinned to upstream commit `dca509fe793f601edb92606367a655c15ac00fdf`. The model weights are separate from the Python package. The default path is `sam_vit_h_4b8939.pth` in the repository root. CLIP weights download automatically to `~/.cache/clip` on first load; an internet connection is required unless already cached.
 
-To use an existing SAM checkpoint:
-
-```bash
-python scripts/run.py --benchmark v20 --data-dir /path/to/VOC2012 \
-  --sam-checkpoint /path/to/sam_vit_h_4b8939.pth --output outputs/v20
-```
+If you already have this checkpoint, copy it into the repository root with exactly that filename. The original implementation resolves this filename relative to its working directory; the launcher always starts in the repository root.
 
 The downloader prints the actual SHA-256. Supply an independently obtained hash using `--sha256` to enforce it. No unverified checksum is claimed for Meta's checkpoint.
 
