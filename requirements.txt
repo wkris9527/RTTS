@@ -1,4 +1,4 @@
-# Install CUDA-enabled torch/torchvision and MMCV first; see docs/installation.md.
+# Install CUDA-enabled torch/torchvision and MMCV first; see README.md.
 numpy==1.26.4
 scipy==1.13.1
 scikit-image==0.24.0
@@ -16,3 +16,5 @@ prettytable==3.12.0
 tqdm==4.67.0
 packaging==24.1
 setuptools<81
+segment-anything @ git+https://github.com/facebookresearch/segment-anything.git@dca509fe793f601edb92606367a655c15ac00fdf
+
