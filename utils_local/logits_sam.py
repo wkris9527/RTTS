@@ -52,16 +52,8 @@ class SAMwithlogits:
         self.nms_iou_threshold = nms_iou_threshold
         self.soft_merging = soft_merging 
         
-        checkpoint = os.environ.get('RTTS_SAM_CHECKPOINT', 'checkpoints/sam_vit_h_4b8939.pth')
-        if not os.path.isfile(checkpoint):
-            raise FileNotFoundError(
-                f'SAM ViT-H checkpoint not found: {checkpoint}. '
-                'Download it with python scripts/download_checkpoints.py, '
-                'or set RTTS_SAM_CHECKPOINT to its path.'
-            )
-        self.sam = sam_model_registry['vit_h'](checkpoint=checkpoint)
+        self.sam = sam_model_registry['vit_h'](checkpoint="sam_vit_h_4b8939.pth")
         self.sam.to(device='cuda:0')
-        self.sam.eval().requires_grad_(False)
         self.predictor = SamPredictor(self.sam)
         # self.auto_mask_generator = SamAutomaticMaskGenerator(
         #     model=self.sam,
