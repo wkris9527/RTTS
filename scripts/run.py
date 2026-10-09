@@ -1,4 +1,4 @@
-"""Portable benchmark launcher. Uses only the Python standard library."""
+"""Launch the anonymous RTTS experiment without changing its algorithm."""
 import argparse
 import json
 import os
@@ -15,19 +15,18 @@ CORRUPTIONS = ['original', 'gaussian_noise', 'shot_noise', 'impulse_noise',
 
 
 def build_command(config, args):
-    command = [sys.executable, 'main.py', '--method', 'rtts',
+    command = [sys.executable, 'main.py', '--adapt', '--method', 'mlmp',
                '--dataset', config['dataset'], '--data_dir', str(Path(args.data_dir).resolve()),
                '--save_dir', str(Path(args.output).resolve()), '--prompt_dir', 'prompts.yaml',
                '--ovss_type', 'naclip', '--ovss_backbone', 'ViT-L/14',
-               '--batch_size', '1', '--workers', str(args.workers),
-               '--refinement_iterations', str(args.iterations),
+               '--vision_outputs', *map(str, range(-1, -19, -1)), '--alpha_cls', '1.0',
+               '--batch-size', '1', '--workers', str(args.workers),
+               '--lr', '0.001', '--steps', '10',
                '--trials', str(args.trials), '--seed', str(args.seed),
                '--init_resize', *map(str, config['init_resize']),
                '--patch_size', '224', '224', '--patch_stride', '112',
                '--corruptions_list', *(CORRUPTIONS if args.corruptions == 'all' else [args.corruptions]),
-               '--class_extensions']
-    if args.debug:
-        command.append('--debug')
+               '--plot_loss', '--class_extensions']
     return command
 
 
@@ -39,21 +38,16 @@ def main():
     parser.add_argument('--corruptions', choices=['all', *CORRUPTIONS], default='original')
     parser.add_argument('--gpu', default='0')
     parser.add_argument('--workers', type=int, default=4)
-    parser.add_argument('--iterations', type=int, default=2)
     parser.add_argument('--trials', type=int, default=1)
     parser.add_argument('--seed', type=int, default=0)
-    parser.add_argument('--sam-checkpoint')
-    parser.add_argument('--debug', action='store_true', help='Run ten batches for a smoke check, not full evaluation.')
     parser.add_argument('--dry-run', action='store_true')
     args = parser.parse_args()
-    if min(args.iterations, args.trials) < 1 or args.workers < 0:
-        parser.error('iterations/trials must be positive; workers must be nonnegative.')
+    if args.trials < 1 or args.workers < 0:
+        parser.error('trials must be positive; workers must be nonnegative.')
     config = json.loads((ROOT / 'configs' / f'{args.benchmark}.json').read_text())
     command = build_command(config, args)
     env = os.environ.copy()
     env['CUDA_VISIBLE_DEVICES'] = args.gpu
-    if args.sam_checkpoint:
-        env['RTTS_SAM_CHECKPOINT'] = str(Path(args.sam_checkpoint).resolve())
     print('CUDA_VISIBLE_DEVICES=' + args.gpu)
     print(shlex.join(command))
     if args.dry_run:
@@ -62,9 +56,18 @@ def main():
     missing = [str(data / path) for path in config['required_paths'] if not (data / path).exists()]
     if missing:
         parser.error('Missing dataset paths:\n' + '\n'.join(missing))
-    checkpoint = Path(env.get('RTTS_SAM_CHECKPOINT', str(ROOT / 'checkpoints/sam_vit_h_4b8939.pth')))
+    checkpoint = ROOT / 'sam_vit_h_4b8939.pth'
     if not checkpoint.is_file():
         parser.error('Missing SAM checkpoint. Run python scripts/download_checkpoints.py first.')
+    output = Path(args.output).resolve()
+    output.mkdir(parents=True, exist_ok=True)
+    try:
+        commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
+    except (OSError, subprocess.CalledProcessError):
+        commit = 'unavailable'
+    record = {'commit': commit, 'argv': command, 'CUDA_VISIBLE_DEVICES': args.gpu,
+              'benchmark': args.benchmark, 'preset': config, 'launcher': vars(args)}
+    (output / 'launch.json').write_text(json.dumps(record, indent=2) + '\n', encoding='utf-8')
     raise SystemExit(subprocess.call(command, cwd=ROOT, env=env))
 
 

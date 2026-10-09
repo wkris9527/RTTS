@@ -30,7 +30,7 @@ def main():
             report['errors'].append('CUDA is unavailable; RTTS requires an NVIDIA GPU.')
     except ImportError:
         pass
-    checkpoint = Path(os.environ.get('RTTS_SAM_CHECKPOINT', str(Path(__file__).resolve().parents[1] / 'checkpoints/sam_vit_h_4b8939.pth')))
+    checkpoint = Path(__file__).resolve().parents[1] / 'sam_vit_h_4b8939.pth'
     report['sam_checkpoint_exists'] = checkpoint.is_file()
     if not checkpoint.is_file():
         report['errors'].append('Missing SAM ViT-H checkpoint.')

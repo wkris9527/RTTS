@@ -9,7 +9,7 @@ URL = 'https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth'
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--output', default=str(Path(__file__).resolve().parents[1] / 'checkpoints/sam_vit_h_4b8939.pth'))
+    parser.add_argument('--output', default=str(Path(__file__).resolve().parents[1] / 'sam_vit_h_4b8939.pth'))
     parser.add_argument('--sha256', help='Optional independently obtained expected SHA-256.')
     args = parser.parse_args()
     destination = Path(args.output)
