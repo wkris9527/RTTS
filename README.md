@@ -1,120 +1,172 @@
+<div align="center">
 
-# Towards Robust Test-Time Segmentation via Iterative Object-centric Adaptation
+# RTTS
 
-The official implementation of our paper "Towards Robust Test-Time Segmentation via Iterative Object-centric Adaptation".
+### Towards Robust Test-Time Segmentation via Iterative Object-centric Adaptation
 
-## Method
+**Junhui Yin · Wenzhe Wang · Bin Fan · Hongmin Liu**<br>
+University of Science and Technology Beijing
 
-<p align="justify">
-<b>Abstract:</b> Open-vocabulary semantic segmentation (OVSS) aims to assign pixel-level semantic labels from an open-ended vocabulary, but remains highly vulnerable to domain shifts. While pre-trained vision–language models (VLMs) provide strong zero-shot generalization, their dense predictions often exhibit spatial incoherence and semantic instability at test time. Existing test-time adaptation (TTA) methods largely rely on patch-wise confidence predictions inherited from image-level classification, which may amplify semantic noise in dense prediction settings. We propose a Robust object-centric Test-Time Segmentation framework (RTTS) that iteratively updates object region proposals and reassigns their semantic labels to improve spatial coherence and semantic consistency. Specifically, CLIP-based semantic cues are used to guide foundation segmentation models for category-aware region proposal generation. A hierarchical object-centric region merging strategy is designed to recover complete object regions by jointly modeling spatial overlap and semantic similarity. To further stabilize semantic assignment under noisy test-time predictions, RTTS employs an optimal transport assignment strategy that leverages global image-level context to produce smooth region-to-category assignments while preserving informative uncertainty. Extensive experiments on benchmark datasets demonstrate that RTTS achieves state-of-the-art performance under challenging domain-shift scenarios, validating its robustness and effectiveness.
-</p>
+[![Python](https://img.shields.io/badge/Python-3.10-blue)](docs/installation.md)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+[![Checks](https://github.com/wkris9527/RTTS/actions/workflows/checks.yml/badge.svg)](https://github.com/wkris9527/RTTS/actions/workflows/checks.yml)
 
-<p align="center">
-    <img src="figures/main.png" width="95%" />
-</p>
+**Training-free refinement · Open-vocabulary semantic segmentation · Corruption robustness**
 
-<!-- Add space -->
-<div style="margin-bottom: 15px;"></div>
+</div>
 
-* We propose a fully training-free, object-centric test-time adaptation framework for open-vocabulary semantic segmentation that improves robustness under domain shift.
+RTTS improves dense vision-language predictions under domain shift through iterative object-level refinement. CLIP semantic responses guide SAM proposals; spatial and semantic cues consolidate regions; Sinkhorn-based assignment provides semantic feedback for the next round.
 
-* We design a hierarchical object-centric merging strategy that integrates VLM predictions with foundation segmentation models to recover coherent object regions.
+![RTTS framework](figures/main.png)
 
-* We develop an optimal transport assignment strategy to stabilize region-level semantic predictions under noisy test-time adaptation.
+PyTorch implementation of **Towards Robust Test-Time Segmentation via Iterative Object-centric Adaptation**, with evaluation presets for seven segmentation benchmarks.
 
+See [installation](docs/installation.md), [dataset preparation](docs/datasets.md), [reproduction protocol](docs/reproducibility.md), and [validation scope](docs/validation.md).
 
-## Requirements 
-- Python 3.10.13
-- CUDA 11.8
-- PyTorch 2.1.2
-- MMSegmentation 1.2.2
+## Getting started
 
+### 1. Install the environment
 
-## Getting Started
-### Step 1: Requirements
-To run RTTS, please install the following packages, and conda environment:
+The main evaluation stack uses Python 3.10, PyTorch 2.1.2 / CUDA 11.8, NaCLIP ViT-L/14, and SAM ViT-H. Linux with an NVIDIA GPU is the reference installation target. The launcher also supports Windows; use `--workers 0` if multiprocessing is unavailable.
 
 ```bash
-conda create -n RTTS python==3.10.13
-conda activate RTTS
-pip install torch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 --index-url https://download.pytorch.org/whl/cu118
-pip install -r requirements.txt
+git clone https://github.com/wkris9527/RTTS.git
+cd RTTS
+conda create -n rtts python=3.10.13 -y
+conda activate rtts
+python -m pip install torch==2.1.2 torchvision==0.16.2 --index-url https://download.pytorch.org/whl/cu118
+python -m pip install mmcv==2.1.0 -f https://download.openmmlab.com/mmcv/dist/cu118/torch2.1/index.html
+python -m pip install -r requirements.txt
+python -m pip install -r requirements/sam.txt
 ```
 
----
-### Step 2: Prepare Datasets
+### 2. Download the model weights
 
-We evaluate RTTS on seven widely-used segmentation benchmarks, chosen to span indoor/outdoor scenes, object–stuff mixes, and a range of class granularities:
-
-- PASCAL VOC 20/21 – The 20 foreground categories (with an optional challenging background label).
-- PASCAL Context 59/60 – The 59 foreground categories (with an optional challenging background label).
-- CityScapes – 19 urban-scene categories.
-- COCO-Object – the 80 COCO object classes.
-- COCO-Stuff 164k – 164 thing-and-stuff classes.
-
-
-Please follow the MMSeg data preparation document to download and pre-process the datasets. Please note that we only use the validation split of each dataset.
-
-
-Additionally, we generate 15 corruption types (e.g., noise, blur, weather, compression) *on-the-fly* at test time, allowing us to effectively evaluate each adaptation method’s robustness to diverse distribution shifts. 
-
-Remember to modify the dataset paths `DATA_DIR` and corruption type in the bash files in `./bash`. 
-
----
-### Step 3: Perform Adaptation
-
-To reproduce our results on PASCAL VOC 20 (v20)— the clean split and all 15 corruption variants—simply run `./bash/v20/rtts.sh`:
 ```bash
-# GPU Configuration
-GPU_ID=0
-
-# Dataset Configuration
-DATASET=PascalVOC20Dataset
-DATA_DIR=".data/VOC2012/"
-INIT_RESIZE="224 224"
-ALL_CORRUPTIONS="original gaussian_noise shot_noise impulse_noise defocus_blur glass_blur motion_blur zoom_blur snow frost fog brightness contrast elastic_transform pixelate jpeg_compression"
-WORKERS=4
-
-# Method and OVSS Model Configuration
-METHOD="rtts"
-OUT_VISION="-1 -2 -3 -4 -5 -6 -7 -8 -9 -10 -11 -12 -13 -14 -15 -16 -17 -18"
-PROMPT_DIR="prompts.yaml"
-ALPHA_CLS=1.0
-OVSS_TYPE="naclip"
-OVSS_BACKBONE="ViT-L/14"
-
-# Hyperparameters
-BATCH_SIZE=1
-LR=0.001
-STEPS=10
-TRIALS=3
-
-# Output
-SAVE_DIR=".save/${DATASET}/${METHOD}/"
-
-# Run
-CUDA_VISIBLE_DEVICES=$GPU_ID python main.py --adapt --method $METHOD --prompt_dir $PROMPT_DIR --vision_outputs $OUT_VISION --alpha_cls $ALPHA_CLS --ovss_type $OVSS_TYPE --ovss_backbone $OVSS_BACKBONE --save_dir $SAVE_DIR --data_dir $DATA_DIR --dataset $DATASET --workers $WORKERS --init_resize $INIT_RESIZE --patch_size 224 224 --patch_stride 112 --corruptions_list $ALL_CORRUPTIONS --lr $LR --steps $STEPS --batch-size $BATCH_SIZE --trials $TRIALS --seed 0 --plot_loss --class_extensions
-
+python scripts/download_checkpoints.py
+python scripts/check_environment.py --output outputs/environment.json
 ```
 
-## Results
+The default SAM ViT-H checkpoint is stored in `checkpoints/`. CLIP ViT-L/14 weights download automatically on first use. To use existing SAM weights, add `--sam-checkpoint /path/to/sam_vit_h_4b8939.pth` to the evaluation command.
 
-Comparison with state-of-the-art TTA methods for open-vocabulary segmentation. For a more detailed analysis and a complete table of the results, please refer to our paper.
+### 3. Prepare the validation data
 
-*Gray rows denote the average performance across various corruption types.*
+Follow [dataset preparation](docs/datasets.md). For the first evaluation, the VOC root must contain:
 
-| Methods  | NoAdapt |  TENT  |  TPT   |  WATT  | CLIPArTT |  MLMP  | **Ours** |
-|----------|---------|--------|--------|--------|----------|--------|----------|
-| V21-O    | 45.12   | 45.65  | 45.17  | 28.58  | 39.50    | 50.78  | **55.54** ↑4.76 |
-| V21-C (Average) | 40.75 | 40.95 | 40.77 | 24.12 | 34.16 | 46.25 | **47.93** ↑1.68 |
-| V20-O    | 75.91   | 77.00  | 75.39  | 57.73  | 72.77    | 83.76  | **85.30** ↑1.54 |
-| V20-C (Average) | 69.01 | 69.03 | 69.03 | 48.30 | 63.39 | **77.58** | 76.84 ↓0.74 |
-| P59-O    | 28.23   | 28.73  | 28.26  | 16.55  | 24.60    | 31.95  | **35.31** ↑3.36 |
-| P59-C (Average) | 23.88 | 23.88 | 23.88 | 13.37 | 19.72 | 27.03 | **28.63** ↑1.60 |
-| P60-O    | 24.95   | 25.29  | 24.98  | 14.77  | 21.88    | 27.99  | **30.94** ↑2.95 |
-| P60-C (Average) | 21.39 | 21.25 | 21.49 | 12.08 | 17.79 | 24.07 | **25.52** ↑1.45 |
-| City-O   | 29.49   | 30.95  | 29.57  | 20.77  | –        | 27.89  | **40.99** ↑13.10 |
-| City-C (Average) | 21.63 | 21.64 | 21.60 | 13.45 | – | 23.02 | **25.26** ↑2.24 |
-| Object-O | 23.80   | 24.88  | 23.84  | 14.14  | 21.34    | 28.84  | **31.96** ↑3.12 |
-| Stuff-O  | 18.34   | 18.76  | 18.35  | 9.49   | 15.48    | 21.25  | **23.22** ↑1.97 |
+```text
+VOC2012/
+├── JPEGImages/
+├── SegmentationClass/
+└── ImageSets/Segmentation/val.txt
+```
 
+Pass the dataset root directly to `--data-dir`. Corruptions are generated during evaluation; no separate corrupted dataset download is required.
+
+### 4. Run evaluation
+
+```bash
+# PASCAL VOC20, clean validation images
+python scripts/run.py --benchmark v20 --data-dir /path/to/VOC2012 \
+  --output outputs/v20-clean --gpu 0
+
+# Clean images and 15 corruptions at severity 5
+python scripts/run.py --benchmark v20 --data-dir /path/to/VOC2012 \
+  --output outputs/v20-all --corruptions all --gpu 0
+
+# Preview the exact command without importing the ML stack
+python scripts/run.py --benchmark cityscapes --data-dir /path/to/cityscapes \
+  --output outputs/cityscapes --dry-run
+```
+
+RTTS performs **two region refinement rounds by default**, freezes all model parameters, and creates no adaptation optimizer. `--iterations` controls these rounds. The `--steps` option in `main.py` belongs to gradient-based baselines.
+
+Use the same command with the following presets and dataset roots. Set `--corruptions all` for clean images plus the complete corruption suite, or omit it for clean evaluation. Use `--trials 3` to record three seeded trials.
+
+| `--benchmark` | `--data-dir` example |
+| :--- | :--- |
+| `v20`, `v21` | `/path/to/VOC2012` |
+| `p59`, `p60` | `/path/to/PASCALContext` |
+| `cityscapes` | `/path/to/cityscapes` |
+| `coco_obj`, `coco_stuff` | `/path/to/coco` |
+
+### 5. Collect the results
+
+Each run saves the effective configuration, the Git commit, the command, aggregate metrics, and per-corruption metrics to the specified output directory. Seeds are set independently for each trial; corrupted inputs use deterministic sample-index seeds. Use a separate output directory for each experiment.
+
+```text
+outputs/v20-all/
+├── configurations.txt
+├── cmd.sh
+├── results.txt
+├── 00_original/results.txt
+└── ...
+```
+
+Export the clean score and the corruption average:
+
+```bash
+python scripts/summarize_results.py outputs/v20-all/results.txt \
+  --output outputs/v20-all/summary.csv
+```
+
+## Benchmarks and reported results
+
+Mean Intersection over Union (mIoU, %), reported in the manuscript's Table I. `O` denotes clean inputs; `C` is the mean over the 15 corruption types at severity 5. Background is included in VOC21 / Context60 and excluded in VOC20 / Context59. No corrupted COCO results are reported in this table.
+
+| Benchmark | Classes | Clean (O) | Corrupted (C) |
+| :--- | ---: | ---: | ---: |
+| PASCAL VOC21 | 21 | 55.54 | 47.93 |
+| PASCAL VOC20 | 20 | 85.30 | 76.84 |
+| PASCAL Context59 | 59 | 35.31 | 28.63 |
+| PASCAL Context60 | 60 | 30.94 | 25.52 |
+| Cityscapes | 19 | 40.99 | 25.26 |
+| COCO-Object | 80 | 31.96 | — |
+| COCO-Stuff | 171 | 23.22 | — |
+
+These are manuscript-reported results, not measurements from the release checks. Full benchmark reproduction with the maintained interface remains to be verified; the historical configuration differences are documented in [reproduction notes](docs/reproducibility.md).
+
+The archived dataset implementation defines 171 COCO-Stuff categories. “164k” refers to dataset image count, not its category count. Dataset class definitions are the authority for the released evaluator.
+
+## Code map
+
+| Location | Purpose |
+| :--- | :--- |
+| `adapt/rtts.py` | Frozen-model RTTS evaluation and text embeddings |
+| `utils_local/refinement.py` | Region feedback and Sinkhorn assignment |
+| `utils_local/logits_sam.py` | CLIP-guided proposals and spatial-semantic merging |
+| `ovss/clip/` | CLIP and NaCLIP backbone implementation |
+| `utils_local/segmentation_datasets.py` | Dataset labels, splits, and metadata |
+| `utils_local/mm_transforms.py` | Corruptions, resize, patch extraction, normalization |
+| `configs/` | Seven benchmark presets with required dataset paths |
+| `scripts/` | Launch, download, diagnose, and summarize |
+| `scripts/legacy/` | Archived anonymous experiment commands |
+| `sam2/` | Optional archived SAM2 experiment code; excluded from the default path |
+| `tests/` | Lightweight and tensor-level release checks |
+
+## Baselines and historical experiments
+
+TENT, TPT, WATT, CLIPArTT, and MLMP remain available through `main.py`. Baselines use the plain OVSS backbone by default. Add `--with_rtts` with MLMP or TPT to request the archived region-feedback combination explicitly. These combinations retain experimental restrictions documented in [reproduction notes](docs/reproducibility.md); they are distinct from the dedicated training-free interface.
+
+The source snapshot preserves the anonymous implementation after removing interpreter caches. Historical scripts and the original README remain available for provenance. Use the documented launcher for new evaluations.
+
+## Citation
+
+If you use RTTS in your research, please cite the accompanying manuscript:
+
+```bibtex
+@unpublished{yin2026rtts,
+  title  = {Towards Robust Test-Time Segmentation via Iterative Object-centric Adaptation},
+  author = {Yin, Junhui and Wang, Wenzhe and Fan, Bin and Liu, Hongmin},
+  year   = {2026},
+  note   = {Manuscript},
+  url    = {https://github.com/wkris9527/RTTS}
+}
+```
+
+Machine-readable software metadata is provided in [CITATION.cff](CITATION.cff).
+
+## License and acknowledgments
+
+Original RTTS contributions use the [MIT License](LICENSE). Incorporated third-party code retains its own licenses; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and `licenses/`. We thank the authors of [CLIP](https://github.com/openai/CLIP), [NaCLIP](https://github.com/sinahmr/NACLIP), [SAM](https://github.com/facebookresearch/segment-anything), [MLMP](https://github.com/dosowiechi/MLMP), SAM2, TENT, WATT, TPT, MMSegmentation, and imagecorruptions.
+
+For questions or reproducibility reports, use [GitHub Issues](https://github.com/wkris9527/RTTS/issues) with the command, environment report, and relevant log excerpt.

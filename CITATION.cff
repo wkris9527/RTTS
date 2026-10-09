@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "If you use RTTS, please cite the accompanying manuscript."
+type: software
+title: "RTTS: Robust Test-Time Segmentation"
+version: 0.1.0
+authors:
+  - family-names: Yin
+    given-names: Junhui
+  - family-names: Wang
+    given-names: Wenzhe
+  - family-names: Fan
+    given-names: Bin
+  - family-names: Liu
+    given-names: Hongmin
+repository-code: "https://github.com/wkris9527/RTTS"
+license: MIT
+preferred-citation:
+  type: unpublished
+  title: "Towards Robust Test-Time Segmentation via Iterative Object-centric Adaptation"
+  authors:
+    - family-names: Yin
+      given-names: Junhui
+    - family-names: Wang
+      given-names: Wenzhe
+    - family-names: Fan
+      given-names: Bin
+    - family-names: Liu
+      given-names: Hongmin
+  year: 2026
+  url: "https://github.com/wkris9527/RTTS"
