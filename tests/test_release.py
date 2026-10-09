@@ -1,6 +1,7 @@
 import argparse
 import ast
 import importlib.util
+import hashlib
 import json
 from pathlib import Path
 import subprocess
@@ -24,32 +25,31 @@ class ReleaseChecks(unittest.TestCase):
                 with self.subTest(path=str(path.relative_to(ROOT))):
                     ast.parse(path.read_text(encoding='utf-8-sig'))
 
-    def test_help_without_ml_dependencies(self):
-        result = subprocess.run([sys.executable, 'main.py', '--help'], cwd=ROOT, capture_output=True, text=True)
+    def test_anonymous_source_hashes(self):
+        manifest = json.loads((ROOT / 'docs/source-manifest.json').read_text())
+        for entry in manifest['files']:
+            with self.subTest(path=entry['release_path']):
+                data = (ROOT / entry['release_path']).read_bytes()
+                if entry['normalize_lf']:
+                    data = data.replace(b'\r\n', b'\n')
+                self.assertEqual(hashlib.sha256(data).hexdigest(), entry['sha256'])
+
+    def test_launcher_help_without_ml_dependencies(self):
+        result = subprocess.run([sys.executable, 'scripts/run.py', '--help'], cwd=ROOT, capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn('--refinement_iterations', result.stdout)
 
-    def test_training_free_rejects_optimizer_flag(self):
-        result = subprocess.run([sys.executable, 'main.py', '--method', 'rtts', '--adapt'],
-                                cwd=ROOT, capture_output=True, text=True)
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn('training-free', result.stderr)
-
-    def test_all_presets_generate_training_free_commands(self):
+    def test_all_presets_use_anonymous_settings(self):
         launcher = load_script('run')
-        args = argparse.Namespace(data_dir='.', output='outputs/test', workers=0,
-                                  iterations=2, trials=1, seed=0, corruptions='all', debug=False)
-        presets = list((ROOT / 'configs').glob('*.json'))
-        self.assertEqual(len(presets), 7)
-        for path in presets:
+        args = argparse.Namespace(data_dir='.', output='outputs/test', workers=4,
+                                  trials=1, seed=0, corruptions='all')
+        for path in (ROOT / 'configs').glob('*.json'):
             with self.subTest(preset=path.stem):
-                config = json.loads(path.read_text())
-                command = launcher.build_command(config, args)
-                self.assertEqual(command[command.index('--method') + 1], 'rtts')
-                self.assertNotIn('--adapt', command)
-                self.assertNotIn('--lr', command)
-                self.assertEqual(command[command.index('--refinement_iterations') + 1], '2')
-                self.assertTrue(config['required_paths'])
+                command = launcher.build_command(json.loads(path.read_text()), args)
+                self.assertEqual(command[command.index('--method') + 1], 'mlmp')
+                self.assertIn('--adapt', command)
+                self.assertEqual(command[command.index('--steps') + 1], '10')
+                self.assertEqual(command[command.index('--lr') + 1], '0.001')
+                self.assertNotIn('--refinement_iterations', command)
 
     def test_summary_requires_complete_corruption_set(self):
         summarizer = load_script('summarize_results')
