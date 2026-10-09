@@ -11,7 +11,7 @@ University of Science and Technology Beijing
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![Checks](https://github.com/wkris9527/RTTS/actions/workflows/checks.yml/badge.svg)](https://github.com/wkris9527/RTTS/actions/workflows/checks.yml)
 
-**Training-free refinement · Open-vocabulary semantic segmentation · Corruption robustness**
+**Object-centric refinement · Open-vocabulary semantic segmentation · Corruption robustness**
 
 </div>
 
@@ -19,7 +19,7 @@ RTTS improves dense vision-language predictions under domain shift through itera
 
 ![RTTS framework](figures/main.png)
 
-PyTorch implementation of **Towards Robust Test-Time Segmentation via Iterative Object-centric Adaptation**, with evaluation presets for seven segmentation benchmarks.
+Code release from the [original anonymous repository](https://anonymous.4open.science/r/RTTS-70F4/) for **Towards Robust Test-Time Segmentation via Iterative Object-centric Adaptation**, with evaluation presets for seven segmentation benchmarks.
 
 See [installation](docs/installation.md), [dataset preparation](docs/datasets.md), [reproduction protocol](docs/reproducibility.md), and [validation scope](docs/validation.md).
 
@@ -47,7 +47,7 @@ python scripts/download_checkpoints.py
 python scripts/check_environment.py --output outputs/environment.json
 ```
 
-The default SAM ViT-H checkpoint is stored in `checkpoints/`. CLIP ViT-L/14 weights download automatically on first use. To use existing SAM weights, add `--sam-checkpoint /path/to/sam_vit_h_4b8939.pth` to the evaluation command.
+Place the SAM ViT-H checkpoint at `sam_vit_h_4b8939.pth` in the repository root, as expected by the anonymous implementation. The downloader uses this path. CLIP ViT-L/14 weights download automatically on first use.
 
 ### 3. Prepare the validation data
 
@@ -78,7 +78,7 @@ python scripts/run.py --benchmark cityscapes --data-dir /path/to/cityscapes \
   --output outputs/cityscapes --dry-run
 ```
 
-RTTS performs **two region refinement rounds by default**, freezes all model parameters, and creates no adaptation optimizer. `--iterations` controls these rounds. The `--steps` option in `main.py` belongs to gradient-based baselines.
+The launcher preserves the anonymous `rtts.sh` setting: `--method mlmp --adapt`, NaCLIP ViT-L/14, 18 vision layers, batch size 1, learning rate 0.001, ten adaptation steps, and one trial. Region feedback remains enabled inside the original backbone with two rounds. The evaluator and algorithm files are unchanged; the launcher only supplies paths and experiment arguments. See [protocol notes](docs/reproducibility.md) for the distinction between the manuscript description and the released execution setting.
 
 Use the same command with the following presets and dataset roots. Set `--corruptions all` for clean images plus the complete corruption suite, or omit it for clean evaluation. Use `--trials 3` to record three seeded trials.
 
@@ -91,10 +91,11 @@ Use the same command with the following presets and dataset roots. Set `--corrup
 
 ### 5. Collect the results
 
-Each run saves the effective configuration, the Git commit, the command, aggregate metrics, and per-corruption metrics to the specified output directory. Seeds are set independently for each trial; corrupted inputs use deterministic sample-index seeds. Use a separate output directory for each experiment.
+The launcher records the actual argument list, GPU selection, preset, seed, and Git commit in `launch.json`. The original evaluator saves configurations and aggregate/per-corruption metrics. Seed handling and data ordering are kept exactly as in the anonymous implementation. Use a separate output directory for each experiment.
 
 ```text
 outputs/v20-all/
+├── launch.json
 ├── configurations.txt
 ├── cmd.sh
 ├── results.txt
@@ -123,7 +124,7 @@ Mean Intersection over Union (mIoU, %), reported in the manuscript's Table I. `O
 | COCO-Object | 80 | 31.96 | — |
 | COCO-Stuff | 171 | 23.22 | — |
 
-These are manuscript-reported results, not measurements from the release checks. Full benchmark reproduction with the maintained interface remains to be verified; the historical configuration differences are documented in [reproduction notes](docs/reproducibility.md).
+These are manuscript-reported results, not measurements from the release checks. Full benchmark scores have not been rerun for this release; the anonymous execution setting is documented in [reproduction notes](docs/reproducibility.md).
 
 The archived dataset implementation defines 171 COCO-Stuff categories. “164k” refers to dataset image count, not its category count. Dataset class definitions are the authority for the released evaluator.
 
@@ -131,8 +132,8 @@ The archived dataset implementation defines 171 COCO-Stuff categories. “164k�
 
 | Location | Purpose |
 | :--- | :--- |
-| `adapt/rtts.py` | Frozen-model RTTS evaluation and text embeddings |
-| `utils_local/refinement.py` | Region feedback and Sinkhorn assignment |
+| `adapt/mlmp.py` | Original evaluation and adaptation entry selected by `rtts.sh` |
+| `ovss/clip/model.py` | Original region feedback, feature aggregation, and Sinkhorn assignment |
 | `utils_local/logits_sam.py` | CLIP-guided proposals and spatial-semantic merging |
 | `ovss/clip/` | CLIP and NaCLIP backbone implementation |
 | `utils_local/segmentation_datasets.py` | Dataset labels, splits, and metadata |
@@ -141,13 +142,13 @@ The archived dataset implementation defines 171 COCO-Stuff categories. “164k�
 | `scripts/` | Launch, download, diagnose, and summarize |
 | `scripts/legacy/` | Archived anonymous experiment commands |
 | `sam2/` | Optional archived SAM2 experiment code; excluded from the default path |
-| `tests/` | Lightweight and tensor-level release checks |
+| `tests/` | Source consistency and launcher/reporting checks |
 
 ## Baselines and historical experiments
 
-TENT, TPT, WATT, CLIPArTT, and MLMP remain available through `main.py`. Baselines use the plain OVSS backbone by default. Add `--with_rtts` with MLMP or TPT to request the archived region-feedback combination explicitly. These combinations retain experimental restrictions documented in [reproduction notes](docs/reproducibility.md); they are distinct from the dedicated training-free interface.
+The algorithm files are taken exclusively from the anonymous repository. TENT, TPT, WATT, CLIPArTT, and MLMP remain as released there. The original backbone enables region feedback at construction, including for some scripts named as baselines; this behavior is preserved.
 
-The source snapshot preserves the anonymous implementation after removing interpreter caches. Historical scripts and the original README remain available for provenance. Use the documented launcher for new evaluations.
+The original shell commands are archived under `scripts/legacy/`. The original README and dependency export are preserved for provenance. [source-manifest.json](docs/source-manifest.json) records SHA-256 for all 130 retained original files, normalizing text line endings only. Added setup and reporting tools do not change the model or evaluation code.
 
 ## Citation
 

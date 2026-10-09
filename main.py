@@ -2,8 +2,17 @@
 import os, time, argparse
 
 # Third-party
+import torch
+import torch.profiler
+import numpy as np
+from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 # Local
+from adapt import get_method
+from utils_local import segmentation_datasets
+from utils_local.metrics import intersect_and_union, process_metrics
+from utils_local.misc import set_global_seeds, save_configuration, aggregate_pred_patches
 import warnings
 warnings.filterwarnings('ignore', category=UserWarning, message='.*antialias.*')
 
@@ -96,7 +105,7 @@ def argparser():
     parser.add_argument(
         '--ovss_type',
         type=str,
-        default='naclip',
+        default='ncalip',
         help='Open-Vocabulary Semantic Segmentation type (e.g., nacalip, clip, clip, etc.)'
     )
     parser.add_argument(
@@ -122,13 +131,13 @@ def argparser():
     parser.add_argument(
         '--method',
         type=str,
-        default='rtts',
+        default='tent',
         help='Adaptation method name (e.g., mlmp watt, tent)'
     )
     parser.add_argument(
         '--batch_size', '--batch-size',
         type=int,
-        default=1,
+        default=128,
         dest='batch_size',
         help='Batch size for adaptation'
     )
@@ -190,10 +199,6 @@ def argparser():
         help='Enable debug mode'
     )
 
-    parser.add_argument('--refinement_iterations', type=int, default=2,
-                        help='RTTS object refinement rounds (no gradient updates).')
-    parser.add_argument('--with_rtts', action='store_true',
-                        help='Enable the archived RTTS feedback for a baseline method.')
     return parser
 
 def add_method_specific_args(parser, method):
@@ -274,18 +279,6 @@ def _sum_profiler_flops(prof):
 
 
 def main(args):
-    global torch, np
-    import torch
-    import numpy as np
-    from tqdm import tqdm
-    import matplotlib.pyplot as plt
-    from adapt import get_method
-    from utils_local import segmentation_datasets
-    from utils_local.metrics import intersect_and_union, process_metrics
-    from utils_local.misc import set_global_seeds, save_configuration, aggregate_pred_patches
-    if args.method == 'rtts' and not torch.cuda.is_available():
-        raise RuntimeError('RTTS requires an NVIDIA GPU and CUDA-enabled PyTorch for SAM.')
-    set_global_seeds(args.seed)
 
     # Save the configuration settings
     save_configuration(args)
@@ -307,7 +300,6 @@ def main(args):
     eval_time_all_corr = []
     
     for c_idx, corruption in enumerate(args.corruptions_list):
-        set_global_seeds(args.seed)
         data_loader, org_classes = segmentation_datasets.prepare_data(args.dataset, args.data_dir, args.init_resize,
                                                                   args.patch_size, args.patch_stride, corruption=corruption, 
                                                                   batch_size=args.batch_size, num_workers=args.workers)
@@ -351,7 +343,6 @@ def main(args):
                 torch.cuda.reset_peak_memory_stats()
 
         for t in range(args.trials):
-            set_global_seeds(args.seed + t)
             results = []
             loss_batch_report = []
             stop_profile = False
@@ -610,18 +601,8 @@ if __name__ == "__main__":
     parser = add_method_specific_args(parser, initial_args.method)
     args = parser.parse_args()
 
-    if args.method == 'rtts' and args.adapt:
-        parser.error('RTTS is training-free; omit --adapt. Use --refinement_iterations instead.')
-    if args.refinement_iterations < 1 or args.trials < 1 or args.batch_size < 1:
-        parser.error('refinement_iterations, trials and batch_size must be positive.')
-    if args.method == 'rtts' and args.with_rtts:
-        parser.error('--with_rtts is for baseline combinations; RTTS already includes refinement.')
-    if args.with_rtts and args.method not in ('mlmp', 'tpt'):
-        parser.error('Archived --with_rtts combinations are supported for mlmp and tpt only.')
-    if not os.path.isdir(args.data_dir):
-        parser.error(f'Dataset directory does not exist: {args.data_dir}')
-    if args.corruptions_list is None:
-        args.corruptions_list = ['original']
+    # Set the global random seed for reproducibility
+    set_global_seeds(args.seed)
 
     # Run the main function with the parsed arguments
     main(args)
