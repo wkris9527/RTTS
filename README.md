@@ -17,7 +17,7 @@ University of Science and Technology Beijing
 
 RTTS improves dense vision-language predictions under domain shift through iterative object-level refinement. CLIP semantic responses guide SAM proposals; spatial and semantic cues consolidate regions; Sinkhorn-based assignment provides semantic feedback for the next round.
 
-![RTTS framework](figures/main.png)
+![RTTS framework](figures/overview.jpg)
 
 Code release from the [original anonymous repository](https://anonymous.4open.science/r/RTTS-70F4/) for **Towards Robust Test-Time Segmentation via Iterative Object-centric Adaptation**, with evaluation presets for seven segmentation benchmarks.
 
@@ -171,3 +171,4 @@ Machine-readable software metadata is provided in [CITATION.cff](CITATION.cff).
 Original RTTS contributions use the [MIT License](LICENSE). Incorporated third-party code retains its own licenses; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and `licenses/`. We thank the authors of [CLIP](https://github.com/openai/CLIP), [NaCLIP](https://github.com/sinahmr/NACLIP), [SAM](https://github.com/facebookresearch/segment-anything), [MLMP](https://github.com/dosowiechi/MLMP), SAM2, TENT, WATT, TPT, MMSegmentation, and imagecorruptions.
 
 For questions or reproducibility reports, use [GitHub Issues](https://github.com/wkris9527/RTTS/issues) with the command, environment report, and relevant log excerpt.
+
