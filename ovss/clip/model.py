@@ -632,7 +632,7 @@ class CLIP(nn.Module):
         self.use_sam = False    
         self.voted = False      
         self.clsvoted = False   
-        self.logits2prompt = False  # Enabled explicitly by load_ovss(enable_rtts=True).
+        self.logits2prompt = True  
         self.auto_mask = False  
         self.logits2prompt_iterations = 2 
         self.random_mask = False  
