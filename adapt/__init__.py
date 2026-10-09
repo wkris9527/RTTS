@@ -1,16 +1,19 @@
 import inspect
 from pprint import pprint
 
-from importlib import import_module
+from .mlmp import MLMP
+from .clipartt import CLIPARTT
+from .watt import WATT
+from .tpt import TPT
+from .tent import TENT
 
 # Map methods to their classes
 METHOD_CLASSES = {
-    'rtts': ('rtts', 'RTTS'),
-    'mlmp': ('mlmp', 'MLMP'),
-    'clipartt': ('clipartt', 'CLIPARTT'),
-    'watt': ('watt', 'WATT'),
-    'tpt': ('tpt', 'TPT'),
-    'tent': ('tent', 'TENT'),
+    'mlmp': MLMP,
+    'clipartt': CLIPARTT,
+    'watt': WATT,
+    'tpt': TPT,
+    'tent': TENT,
 }
 
 
@@ -21,8 +24,7 @@ def get_method(args, device):
         raise ValueError(f"Unknown method: {args.method}")
     
     # Retrieve the class and its arguments
-    module_name, class_name = METHOD_CLASSES[args.method]
-    method_class = getattr(import_module(f'.{module_name}', __package__), class_name)
+    method_class = METHOD_CLASSES[args.method]
     class_args = get_class_args(method_class)
     
     # Filter relevant args and add additional variables
@@ -31,9 +33,7 @@ def get_method(args, device):
     method_args['device'] = device  # Add device explicitly if needed
 
     # Check for missing arguments
-    signature = inspect.signature(method_class.__init__)
-    missing_args = [key for key in class_args if key not in method_args
-                    and signature.parameters[key].default is inspect.Parameter.empty]
+    missing_args = [key for key in class_args if key not in method_args]
     if missing_args:
         raise ValueError(f"Missing arguments for {method_class.__name__}: {missing_args}")
     
@@ -49,11 +49,7 @@ def get_method(args, device):
     # print("----------------------------------------")
 
     # Instantiate the class with relevant arguments
-    method = method_class(**method_args)
-    if args.method != 'rtts' and getattr(args, 'with_rtts', False) and args.method != 'tpt':
-        from ovss import configure_refinement
-        configure_refinement(method.model)
-    return method
+    return method_class(**method_args)
 
 
 # Function to get class arguments dynamically
