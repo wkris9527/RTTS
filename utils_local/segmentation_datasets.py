@@ -456,7 +456,7 @@ mm_pascalcontect60_cfg = {
 
 
 
-def prepare_data(dataset, data_dir, init_resize, patch_size, patch_stride, corruption="original", batch_size=128, num_workers=1, shuffle=True):
+def prepare_data(dataset, data_dir, init_resize, patch_size, patch_stride, corruption="original", batch_size=128, num_workers=1, shuffle=False):
     
     # # print everything
     # print("\n+++++++ Data Preparation +++++++")

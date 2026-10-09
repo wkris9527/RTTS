@@ -3,6 +3,8 @@ import yaml
 import torch
 import random
 import subprocess
+import sys
+import shlex
 
 import numpy as np
 from datetime import datetime
@@ -66,7 +68,7 @@ def save_configuration(args, config_file="configurations.txt", cmd_file="cmd.sh"
     # Save the command to a file
     cmd_filepath = os.path.join(args.save_dir, cmd_file)
     arg_dict = vars(args)
-    cmd = "python main_segmentation.py"
+    cmd = "python main.py"
     for key, value in arg_dict.items():
         # Use the exact argument name with underscores
         formatted_key = f"--{key}"
@@ -79,6 +81,7 @@ def save_configuration(args, config_file="configurations.txt", cmd_file="cmd.sh"
         elif value is not None:
             cmd += f" {formatted_key} {value}"
 
+    cmd = shlex.join(['python', *sys.argv])
     with open(cmd_filepath, "w") as cmd_f:
         cmd_f.write(cmd + "\n")
     print(f"Configurations & Command saved!")
