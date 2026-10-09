@@ -48,11 +48,7 @@ python -m pip install -r requirements.txt
 
 ### Model weights
 
-The default evaluation uses **NaCLIP ViT-L/14** and **SAM ViT-H**. CLIP weights download automatically on first use. Download the SAM checkpoint into the repository root:
-
-```bash
-curl -L https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth -o sam_vit_h_4b8939.pth
-```
+The default evaluation uses **NaCLIP ViT-L/14** and **SAM ViT-H**. CLIP weights download automatically on first use. Download [SAM ViT-H weights](https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth) and place `sam_vit_h_4b8939.pth` in the repository root.
 
 For **SAM2**, obtain the source code, installation instructions, and model checkpoints from the [official Meta SAM2 repository](https://github.com/facebookresearch/sam2). SAM2 is optional and is not required by the default RTTS evaluation. Its environment requirements differ from the stack above; follow the upstream instructions in a separate environment.
 
@@ -153,7 +149,7 @@ If you find this work useful, please cite:
 
 This project builds on [MLMP](https://github.com/dosowiechi/MLMP), [NaCLIP](https://github.com/sinahmr/NaCLIP), [CLIP](https://github.com/openai/CLIP), and [SAM](https://github.com/facebookresearch/segment-anything). We thank their authors for making the code and models available.
 
-RTTS contributions are released under the [MIT License](LICENSE). Third-party copyright and license texts are retained in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+RTTS contributions are released under the [MIT License](LICENSE). Third-party copyright and license texts are included in the same license file.
 
 For questions and reproducibility reports, please open a [GitHub issue](https://github.com/wkris9527/RTTS/issues).
 
