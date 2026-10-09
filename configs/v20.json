@@ -1,0 +1,12 @@
+{
+  "dataset": "PascalVOC20Dataset",
+  "init_resize": [
+    224,
+    224
+  ],
+  "required_paths": [
+    "JPEGImages",
+    "SegmentationClass",
+    "ImageSets/Segmentation/val.txt"
+  ]
+}

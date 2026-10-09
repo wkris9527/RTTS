@@ -1,0 +1,12 @@
+{
+  "dataset": "PascalContext59Dataset",
+  "init_resize": [
+    224,
+    224
+  ],
+  "required_paths": [
+    "JPEGImages",
+    "SegmentationClassContext",
+    "ImageSets/SegmentationContext/val.txt"
+  ]
+}
